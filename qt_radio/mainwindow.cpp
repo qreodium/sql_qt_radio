@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->enemyTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->suppressButton->setEnabled(false);
 
 }
 
@@ -28,6 +29,7 @@ void MainWindow::suppress()
 
 void MainWindow::disableSelection()
 {
+    ui->enemyTable->clearSelection();
     int row = ui->enemyTable->rowCount()-1;
     ui->enemyTable->item(row,0)->setFlags(ui->enemyTable->item(row,0)->flags() & (~Qt::ItemIsSelectable));
     ui->enemyTable->item(row,1)->setFlags(ui->enemyTable->item(row,1)->flags() & (~Qt::ItemIsSelectable));
@@ -49,7 +51,8 @@ void MainWindow::addRow(QSqlQuery query, int counter)
     if(ui->enemyTable->rowCount() > 0)
         disableSelection();
     QRandomGenerator gen =  QRandomGenerator(QDateTime::currentMSecsSinceEpoch());
-    query.seek(gen.bounded(9));// ДЛИНУ ИЗ БАЗЫ
+    query.last();
+    query.seek(gen.bounded(query.at()+1));
     ui->enemyTable->insertRow(ui->enemyTable->rowCount());
     QTableWidgetItem *item_Freq = new QTableWidgetItem(query.value(1).toString());
     QTableWidgetItem *item_modulation;
@@ -68,6 +71,9 @@ void MainWindow::addRow(QSqlQuery query, int counter)
     else
         QTimer::singleShot(2000, this, [this] {
             disableSelection();
+            ui->startButton->setEnabled(true);
+            ui->resetButton->setEnabled(true);
+            ui->suppressButton->setEnabled(false);
         });
 }
 
@@ -88,6 +94,9 @@ void MainWindow::simulation()
             }
             else
             {
+                ui->startButton->setEnabled(false);
+                ui->resetButton->setEnabled(false);
+                ui->suppressButton->setEnabled(true);
                 addRow(query, 5);
             }
     }
